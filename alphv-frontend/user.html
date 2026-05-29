@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHV User Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; max-width: 600px; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: middle; }
+        th { background-color: #f4f4f4; }
+        
+        /* CSS Shape Generators */
+        .shape { margin: 0 auto; }
+        .square { width: 50px; height: 50px; }
+        .circle { width: 50px; height: 50px; border-radius: 50%; }
+        /* Triangles in CSS are made using thick borders with zero width/height */
+        .triangle { width: 0; height: 0; border-left: 25px solid transparent; border-right: 25px solid transparent; border-bottom: 50px solid; }
+    </style>
+</head>
+<body>
+
+    <h2>User Portal (Live View)</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Name</th>
+                <th style="text-align: center;">Shapecolor</th>
+            </tr>
+        </thead>
+        <tbody id="recordTableBody">
+            </tbody>
+    </table>
+
+    <script>
+        // Function to fetch data and update the table
+        function fetchRecords() {
+            // 1. Ask the Laravel API for all records
+            fetch('http://127.0.0.1:8000/api/records')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('recordTableBody');
+                    tableBody.innerHTML = ''; // Clear the old rows before adding new ones
+
+                    // 2. Loop through every record in the database
+                    data.forEach(record => {
+                        const row = document.createElement('tr');
+
+                        // Format the timestamp (e.g., separating date and time)
+                        const dateObj = new Date(record.created_at);
+                        const formattedTime = dateObj.toLocaleTimeString('en-GB') + ' ' + dateObj.toISOString().split('T')[0];
+
+                        // 3. Logic to render the visual shape based on the database text
+                        let shapeHTML = '';
+                        if (record.shape === 'triangle') {
+                            // Triangles use border-bottom-color in CSS
+                            shapeHTML = `<div class="shape triangle" style="border-bottom-color: ${record.color};"></div>`;
+                        } else {
+                            // Squares and Circles use standard background-color
+                            shapeHTML = `<div class="shape ${record.shape}" style="background-color: ${record.color};"></div>`;
+                        }
+
+                        // 4. Inject the data into the HTML row
+                        row.innerHTML = `
+                            <td>${formattedTime}</td>
+                            <td>${record.name}</td>
+                            <td style="text-align: center;">${shapeHTML}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => console.error("Error fetching data:", error));
+        }
+
+        // Fetch immediately when the page loads
+        fetchRecords();
+
+        // REAL-TIME SHORT POLLING: Continuously fetch new records every few seconds to update the table in real-time
+        // Run the fetchRecords function every 3000 milliseconds (3 seconds)
+        setInterval(fetchRecords, 3000);
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHV Admin Portal</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 400px; }
+        form { display: flex; flex-direction: column; gap: 15px; }
+        select, input, button { padding: 8px; font-size: 16px; }
+        #statusMessage { margin-top: 15px; font-weight: bold; color: green; }
+    </style>
+</head>
+<body>
+
+    <h2>Admin Portal</h2>
+    
+    <form id="recordForm">
+        <label>Name:</label>
+        <input type="text" id="name" required placeholder="e.g., Albert">
+
+        <label>Shape:</label>
+        <select id="shape" required>
+            <option value="triangle">Triangle</option>
+            <option value="square">Square</option>
+            <option value="circle">Circle</option>
+        </select>
+
+        <label>Color:</label>
+        <select id="color" required>
+            <option value="red">Red</option>
+            <option value="blue">Blue</option>
+            <option value="green">Green</option>
+            <option value="yellow">Yellow</option>
+        </select>
+
+        <button type="submit">Submit Data</button>
+    </form>
+
+    <div id="statusMessage"></div>
+
+    <script>
+        // Listen for the form submission
+        document.getElementById('recordForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevents the page from refreshing
+
+            // 1. Capture the data from the form
+            const payload = {
+                name: document.getElementById('name').value,
+                shape: document.getElementById('shape').value,
+                color: document.getElementById('color').value
+            };
+
+            console.log("1. Form Submitted. Payload prepared:", payload);
+
+            // 2. Send the data to the Laravel API using fetch()
+            fetch('http://127.0.0.1:8000/api/records', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json()) // Parse the backend response
+            .then(data => {
+                console.log("2. Success! Server responded with:", data);
+                document.getElementById('statusMessage').innerText = "Record successfully saved to database!";
+                document.getElementById('recordForm').reset(); // Clear the form
+            })
+            .catch(error => {                console.error("Error occurred:", error);
+            document.getElementById('statusMessage').style.color = "red";
+            document.getElementById('statusMessage').innerText = "Failed to connect to backend.";
+            });
+        });
+    </script>
+
+</body>
+</html>
