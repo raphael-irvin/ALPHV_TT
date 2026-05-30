@@ -25,7 +25,7 @@
     <table>
         <thead>
             <tr>
-                <th>Timestamp</th>
+                <th>Last Updated</th>
                 <th>Name</th>
                 <th style="text-align: center;">Shapecolor</th>
             </tr>
@@ -47,9 +47,11 @@
                     // 2. Loop through every record in the database
                     data.forEach(record => {
                         const row = document.createElement('tr');
+                        
+                        // Check if created_at or updated_at (priority) is available and use it for the timestamp
 
                         // Format the timestamp (e.g., separating date and time)
-                        const dateObj = new Date(record.created_at);
+                        const dateObj = new Date(record.updated_at || record.created_at);
                         const formattedTime = dateObj.toLocaleTimeString('en-GB') + ' ' + dateObj.toISOString().split('T')[0];
 
                         // 3. Logic to render the visual shape based on the database text
