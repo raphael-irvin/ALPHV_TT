@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALPHV Login</title>
+    <style>
+        /* Modern Layout CSS */
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #f3f4f6; }
+        
+        /* The Sidebar */
+        .sidebar { width: 250px; background-color: #1f2937; color: white; display: flex; flex-direction: column; padding: 20px; }
+        .sidebar h2 { margin-top: 0; font-size: 24px; letter-spacing: 2px; }
+        .nav-link { color: #9ca3af; text-decoration: none; padding: 10px 0; font-size: 16px; margin-bottom: 5px; }
+        .nav-link:hover, .active { color: white; font-weight: bold; }
+        
+        /* Main Content Area */
+        .main-content { flex: 1; display: flex; justify-content: center; align-items: center; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+        .login-card h3 { margin-top: 0; }
+        
+        /* Form Elements */
+        input { width: 100%; padding: 10px; margin: 10px 0 20px 0; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box;}
+        button { width: 100%; padding: 10px; background-color: #2563eb; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+        button:hover { background-color: #1d4ed8; }
+        #errorMessage { color: red; margin-top: 10px; text-align: center; font-size: 14px; }
+    </style>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <h2>ALPHV</h2>
+        <a href="user.html" class="nav-link">Public Dashboard</a>
+        <a href="admin.html" class="nav-link">Administrator</a>
+    </div>
+
+    <div class="main-content">
+        <div class="login-card">
+            <h3>Admin Login</h3>
+            <form id="loginForm">
+                <label>Email Address</label>
+                <input type="email" id="email" required placeholder="admin@alphv.com">
+
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="••••••••">
+
+                <button type="submit">Secure Login</button>
+            </form>
+            <div id="errorMessage"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            const payload = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            fetch('http://127.0.0.1:8000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error("Invalid credentials");
+                return response.json();
+            })
+            .then(data => {
+                // SUCCESS! Save the token to the browser's vault (localStorage)
+                localStorage.setItem('auth_token', data.token);
+                // Redirect the user automatically to the admin portal
+                window.location.href = 'admin.html'; 
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').innerText = "Incorrect email or password.";
+            });
+        });
+    </script>
+</body>
+</html>
