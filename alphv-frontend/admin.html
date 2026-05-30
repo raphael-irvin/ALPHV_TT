@@ -4,24 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALPHV Admin Portal</title>
-    <style>
-        /* Exact same layout as Login page */
-        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #f3f4f6; }
-        .sidebar { width: 250px; background-color: #1f2937; color: white; display: flex; flex-direction: column; padding: 20px; }
-        .sidebar h2 { margin-top: 0; font-size: 24px; letter-spacing: 2px; }
-        .nav-link { color: #9ca3af; text-decoration: none; padding: 10px 0; font-size: 16px; margin-bottom: 5px; }
-        .nav-link:hover, .active { color: white; font-weight: bold; }
-        .logout-btn { margin-top: auto; padding: 10px; background-color: #dc2626; color: white; border: none; cursor: pointer; border-radius: 4px; text-align: center;}
-        
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
-        .admin-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; }
-        
-        input, select { padding: 8px; margin: 5px 0 15px 0; width: 100%; max-width: 300px; display: block; border: 1px solid #ccc; border-radius: 4px;}
-        button { padding: 8px 15px; background-color: #2563eb; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px;}
-        th, td { border-bottom: 1px solid #e5e7eb; padding: 12px 5px; }
-    </style>
-
+    <link rel="stylesheet" href="styles.css">
     <script>
         // === SECURITY CHECK: VERIFY TOKEN ON PAGE LOAD ===
         const token = localStorage.getItem('auth_token');

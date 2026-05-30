@@ -1,0 +1,35 @@
+/* Shared Layout */
+body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #f3f4f6; }
+
+/* The Sidebar */
+.sidebar { width: 250px; background-color: #1f2937; color: white; display: flex; flex-direction: column; padding: 20px; }
+.sidebar h2 { margin-top: 0; font-size: 24px; letter-spacing: 2px; }
+.nav-link { color: #9ca3af; text-decoration: none; padding: 10px 0; font-size: 16px; margin-bottom: 5px; }
+.nav-link:hover, .active { color: white; font-weight: bold; }
+.logout-btn { margin-top: auto; padding: 10px; background-color: #dc2626; color: white; border: none; cursor: pointer; border-radius: 4px; text-align: center; }
+
+/* Main Content Area & Cards */
+.main-content { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; }
+.main-content.center { justify-content: center; align-items: center; } /* Used for login page */
+.admin-card { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; width: 100%; max-width: 1200px; }
+.login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+
+/* Form Elements */
+input, select { padding: 8px; margin: 5px 0 15px 0; width: 100%; max-width: fill; display: block; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;}
+.login-card input { max-width: 100%; }
+button { padding: 10px 15px; background-color: #2563eb; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+button:hover { background-color: #1d4ed8; }
+
+/* Tables */
+table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px;}
+th, td { border-bottom: 1px solid #e5e7eb; padding: 12px 5px; }
+th { color: #4b5563; }
+
+/* Shapes */
+.shape { margin: 0 auto; }
+.square { width: 40px; height: 40px; }
+.circle { width: 40px; height: 40px; border-radius: 50%; }
+.triangle { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid; }
+
+/* Utilities */
+#errorMessage, #statusMessage { margin-top: 15px; font-weight: bold; font-size: 14px; }
