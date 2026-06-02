@@ -21,8 +21,8 @@ class RecordController extends Controller
         // STRICT VALIDATION: Ensures no empty fields and validates specific choices
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'shape' => 'required|string',
-            'color' => 'required|string',
+            'shape' => 'required|in:triangle,square,circle',
+            'color' => 'required|in:red,blue,green,yellow',
         ]);
 
         // If validation passes, create a new row in the database
@@ -44,8 +44,8 @@ class RecordController extends Controller
         // Validate the new incoming data
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'shape' => 'required|string',
-            'color' => 'required|string',
+            'shape' => 'required|in:triangle,square,circle',
+            'color' => 'required|in:red,blue,green,yellow',
         ]);
 
         // Update the database and save
