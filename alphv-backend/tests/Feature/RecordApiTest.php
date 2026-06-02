@@ -82,4 +82,34 @@ class RecordApiTest extends TestCase
         $response->assertStatus(200);
         $this->assertDatabaseMissing('records', ['id' => $record->id]);
     }
+
+    public function test_api_deny_invalid_data_on_create()
+    {
+        $admin = User::factory()->create();
+        Sanctum::actingAs($admin);
+
+        $invalidPayload = ['name' => 'Valid Name', 'shape' => 'hexagon', 'color' => 'invisible'];
+
+        $response = $this->postJson('/api/records', $invalidPayload);
+
+        $response->assertStatus(422); // Unprocessable Entity due to validation errors
+    }
+
+    public function test_api_deny_invalid_data_on_update()
+    {
+        $admin = User::factory()->create();
+        Sanctum::actingAs($admin);
+
+        $record = Record::create([
+            'name' => 'Test Shape',
+            'shape' => 'square',
+            'color' => 'blue'
+        ]);
+
+        $invalidUpdatePayload = ['name' => 'Still Valid Name', 'shape' => 'pentagon', 'color' => 'invisible'];
+
+        $response = $this->putJson('/api/records/' . $record->id, $invalidUpdatePayload);
+
+        $response->assertStatus(422); // Unprocessable Entity due to validation errors
+    }
 }
