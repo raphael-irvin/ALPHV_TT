@@ -51,16 +51,16 @@ The application is split into two portals:
 │                     CLIENT BROWSER                      │
 │                                                         │
 │  ┌─────────────────┐       ┌─────────────────────────┐  │
-│  │   user.html     │       │      admin.html          │  │
-│  │  (Public View)  │       │  (Protected — token      │  │
-│  │                 │       │   required)              │  │
-│  │  Polls every    │       │  Full CRUD via           │  │
-│  │  3 seconds      │       │  Bearer Token            │  │
+│  │   user.html     │       │      admin.html         │  │
+│  │  (Public View)  │       │  (Protected — token     │  │
+│  │                 │       │   required)             │  │
+│  │  Polls every    │       │  Full CRUD via          │  │
+│  │  3 seconds      │       │  Bearer Token           │  │
 │  └────────┬────────┘       └───────────┬─────────────┘  │
-│           │                            │                 │
-│           │         login.html         │                 │
-│           │    (Issues Bearer Token)   │                 │
-│           └──────────────┬─────────────┘                 │
+│           │                            │                │
+│           │         login.html         │                │
+│           │    (Issues Bearer Token)   │                │
+│           └──────────────┬─────────────┘                │
 └──────────────────────────┼──────────────────────────────┘
                            │ HTTP / JSON
                            ▼
@@ -68,23 +68,23 @@ The application is split into two portals:
 │               LARAVEL 12 API BACKEND                    │
 │                   localhost:8000                        │
 │                                                         │
-│  ┌──────────────┐   ┌────────────────────────────────┐  │
-│  │ AuthController│   │       RecordController         │  │
-│  │              │   │                                │  │
-│  │  POST /login  │   │  GET    /api/records  (public) │  │
-│  │  POST /logout │   │  POST   /api/records  (auth)   │  │
-│  └──────────────┘   │  PUT    /api/records/{id}(auth) │  │
-│                     │  DELETE /api/records/{id}(auth) │  │
-│  Laravel Sanctum    └────────────────────────────────┘  │
+│  ┌───────────────┐   ┌────────────────────────────────┐ │
+│  │ AuthController│   │       RecordController         │ │
+│  │               │   │                                │ │
+│  │  POST /login  │   │  GET    /api/records  (public) │ │
+│  │  POST /logout │   │  POST   /api/records  (auth)   │ │
+│  └───────────────┘   │  PUT    /api/records/{id}(auth)│ │
+│                      │  DELETE /api/records/{id}(auth)│ │
+│  Laravel Sanctum     └────────────────────────────────┘ │
 │  (Token Auth)                                           │
 └──────────────────────────┬──────────────────────────────┘
                            │ Eloquent ORM
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │                  MySQL DATABASE                         │
-│                   (XAMPP / Port 3306)                  │
+│                   (XAMPP / Port 3306)                   │
 │                                                         │
-│   users  │  records  │  personal_access_tokens         │
+│   users  │  records  │  personal_access_tokens          │
 └─────────────────────────────────────────────────────────┘
 ```
 
