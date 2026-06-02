@@ -18,8 +18,7 @@
         </include>
     </source>
 
-
-    // Environment variables for testing configuration
+    <!-- Environment variables for testing configuration -->
     <php>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>

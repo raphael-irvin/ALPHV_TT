@@ -9,12 +9,14 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
+
     {
-        // Creates your permanent Admin account with a securely hashed password
-        User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@alphv.com',
-            'password' => Hash::make('admin'), 
-        ]);
+        User::firstOrCreate( // firstOrCreate will check if a user with the given email exists, and if not, it will create one
+            ['email' => 'admin@alphv.com'],
+            [
+                'name'     => 'Admin User',
+                'password' => Hash::make('admin'), // Hash::make will hash the password before storing it in the database
+            ]
+        );
     }
 }
