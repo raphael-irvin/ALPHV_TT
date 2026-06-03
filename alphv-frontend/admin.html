@@ -55,7 +55,7 @@
         <div class="admin-card">
             <h3>Manage Existing Records</h3>
             <table>
-                <thead><tr><th>Name</th><th>Shape</th><th>Color</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Last Updated</th><th>Name</th><th>Shape</th><th>Color</th><th>Actions</th></tr></thead>
                 <tbody id="adminTableBody"></tbody>
             </table>
         </div>
@@ -92,9 +92,16 @@
                     const tbody = document.getElementById('adminTableBody');
                     tbody.innerHTML = ''; 
                     data.forEach(r => {
+
+                        const dateObj = new Date(r.updated_at || r.created_at);
+                        const formattedTime = dateObj.toLocaleTimeString('en-GB') + ' ' + dateObj.toISOString().split('T')[0];
+
                         tbody.innerHTML += `
                             <tr>
-                                <td>${r.name}</td><td>${r.shape}</td><td>${r.color}</td>
+                                <td>${formattedTime}</td>
+                                <td>${r.name}</td>
+                                <td>${r.shape}</td>
+                                <td>${r.color}</td>
                                 <td>
                                     <button onclick="setupEdit(${r.id}, '${r.name}', '${r.shape}', '${r.color}')">Edit</button>
                                     <button onclick="deleteRecord(${r.id})" style="background: red;">Delete</button>
