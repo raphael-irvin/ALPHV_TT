@@ -130,9 +130,31 @@ button:active {
 .login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
 
 /* Tables */
-table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px;}
-th, td { border-bottom: 1px solid #e5e7eb; padding: 12px 5px; }
+table { 
+    width: 100%; 
+    text-align: left; 
+    border-collapse: collapse; 
+    margin-top: 15px;
+    table-layout: fixed; /* Forces the browser to respect our strict widths */
+}
+th, td { 
+    border-bottom: 1px solid #e5e7eb; 
+    padding: 12px 5px; 
+    /* Truncate long text instead of breaking the layout */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 th { color: #4b5563; }
+
+/* Assign strict percentages to each column so they never shift.
+  (Adjust these percentages based on user.html vs admin.html needs)
+*/
+th:nth-child(1) { width: 25%; } /* Timestamp */
+th:nth-child(2) { width: 20%; } /* Name */
+th:nth-child(3) { width: 15%; } /* Shape */
+th:nth-child(4) { width: 15%; } /* Color */
+th:nth-child(5) { width: 25%; } /* Actions */
 
 /* Shapes */
 .shape { margin: 0 auto; }

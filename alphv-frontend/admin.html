@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALPHV Admin Portal</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="shared.js"></script>
     <script>
         // === SECURITY CHECK: VERIFY TOKEN ON PAGE LOAD ===
         const token = localStorage.getItem('auth_token');
@@ -86,29 +87,32 @@
 
         // === FETCH RECORDS ===
         function fetchAdminRecords() {
-            fetch('http://127.0.0.1:8000/api/records')
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.getElementById('adminTableBody');
-                    tbody.innerHTML = ''; 
-                    data.forEach(r => {
+            
+            //Show a loading state instantly while we wait for the server
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
 
-                        const dateObj = new Date(r.updated_at || r.created_at);
-                        const formattedTime = dateObj.toLocaleTimeString('en-GB') + ' ' + dateObj.toISOString().split('T')[0];
+            getRecordsFromAPI().then(data => {
+                tbody.innerHTML = ''; 
+                
+                const records = data.data || data; 
 
-                        tbody.innerHTML += `
-                            <tr>
-                                <td>${formattedTime}</td>
-                                <td>${r.name}</td>
-                                <td>${r.shape}</td>
-                                <td>${r.color}</td>
-                                <td>
-                                    <button onclick="setupEdit(${r.id}, '${r.name}', '${r.shape}', '${r.color}')">Edit</button>
-                                    <button onclick="deleteRecord(${r.id})" style="background: red;">Delete</button>
-                                </td>
-                            </tr>`;
-                    });
+                records.forEach(r => {
+                    const formattedTime = formatRecordTime(r); // Using shared function!
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${formattedTime}</td>
+                            <td>${r.name}</td>
+                            <td>${r.shape}</td>
+                            <td>${r.color}</td>
+                            <td>
+                                <button onclick="setupEdit(${r.id}, '${r.name}', '${r.shape}', '${r.color}')">Edit</button>
+                                <button onclick="deleteRecord(${r.id})" style="background: red;">Delete</button>
+                            </td>
+                        </tr>`;
                 });
+            }).catch(error => console.error("Error fetching data:", error));
         }
         fetchAdminRecords();
 
@@ -120,7 +124,7 @@
                 headers: getAuthHeaders() // Must include token!
             })
             .then(res => {
-                if(!res.ok) throw new Error("Unauthorized"); // THE BUG FIX
+                if(!res.ok) throw new Error("Unauthorized");
                 fetchAdminRecords();
             })
             .catch(err => alert("Failed to delete. Session may have expired."));
