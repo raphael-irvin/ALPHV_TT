@@ -88,9 +88,12 @@
         // === FETCH RECORDS ===
         function fetchAdminRecords() {
             
-            //Show a loading state instantly while we wait for the server
             const tbody = document.getElementById('adminTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
+            
+            // Only show 'Loading...' if this is the very first time the page loads
+            if (tbody.innerHTML.trim() === '') {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
+            }
 
             getRecordsFromAPI().then(data => {
                 tbody.innerHTML = ''; 
