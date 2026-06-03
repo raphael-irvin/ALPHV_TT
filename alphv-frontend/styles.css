@@ -1,5 +1,8 @@
 /* Shared Layout */
-body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #f3f4f6; }
+body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; background-color: #ffffff; }
+
+.page-header { color: #2563eb; font-size: 28px; font-weight: bold; letter-spacing: 2px; margin-bottom: 30px; }
+.section-header { color: #000000; font-weight: bold; letter-spacing: 1px; margin-bottom: 20px; }
 
 /* The Sidebar */
 .sidebar { width: 250px; background-color: #ffffff; color: white; display: flex; flex-direction: column; padding: 20px; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
@@ -123,8 +126,8 @@ button:active {
 /* Main Content Area & Cards */
 .main-content { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; }
 .main-content.center { justify-content: center; align-items: center; } /* Used for login page */
-.admin-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 30px; width: 100%; max-width: 1000px; }
-.login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
+.admin-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 0px 12px rgba(0,0,0,0.1); margin-bottom: 30px; width: 100%; max-width: 1000px; }
+.login-card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 350px; }
 
 /* Tables */
 table { width: 100%; text-align: left; border-collapse: collapse; margin-top: 15px;}
