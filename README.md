@@ -1,6 +1,6 @@
 # ALPHV Technical Assessment — Web Application
 
-A full-stack web application built for the ALPHV Work-Based Learning (WBL) internship selection assessment at Taylor's University. The system consists of a RESTful API backend and a vanilla frontend that communicates with it, featuring token-based authentication and a real-time public dashboard.
+A full-stack web application built for the ALPHV Work-Based Learning (WBL) internship selection assessment. The system consists of a RESTful API backend and a vanilla frontend that communicates with it, featuring token-based authentication and a real-time public dashboard.
 
 ---
 
