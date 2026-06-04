@@ -101,7 +101,7 @@ class RecordApiTest extends TestCase
         Sanctum::actingAs($admin);
 
         $record = Record::create([
-            'name' => 'Test Shape',
+            'name'  => 'Test Shape',
             'shape' => 'square',
             'color' => 'blue'
         ]);
@@ -111,5 +111,50 @@ class RecordApiTest extends TestCase
         $response = $this->putJson('/api/records/' . $record->id, $invalidUpdatePayload);
 
         $response->assertStatus(422); // Unprocessable Entity due to validation errors
+    }
+
+    // === TESTS FOR PAGINATION ===
+
+    public function test_records_index_returns_paginated_response_structure()
+    {
+        // Create 15 records → 2 pages (10 on page 1, 5 on page 2)
+        Record::factory()->count(15)->create();
+
+        $response = $this->getJson('/api/records');
+
+        $response->assertStatus(200)
+                 // Verify the standard Laravel paginator envelope fields are all present
+                 ->assertJsonStructure([
+                     'data',
+                     'current_page',
+                     'last_page',
+                     'per_page',
+                     'total',
+                     'from',
+                     'to',
+                     'next_page_url',
+                     'prev_page_url',
+                 ])
+                 // Page 1 of 2, 10 records per page, 15 total
+                 ->assertJsonPath('current_page', 1)
+                 ->assertJsonPath('last_page', 2)
+                 ->assertJsonPath('per_page', 10)
+                 ->assertJsonPath('total', 15)
+                 // Exactly 10 records in the 'data' array on the first page
+                 ->assertJsonCount(10, 'data');
+    }
+
+    public function test_records_index_page_2_returns_correct_slice()
+    {
+        // Create 15 records → page 2 should contain exactly 5
+        Record::factory()->count(15)->create();
+
+        $response = $this->getJson('/api/records?page=2');
+
+        $response->assertStatus(200)
+                 ->assertJsonPath('current_page', 2)
+                 ->assertJsonPath('last_page', 2)
+                 // 5 records remain on the last page (15 total − 10 on page 1)
+                 ->assertJsonCount(5, 'data');
     }
 }

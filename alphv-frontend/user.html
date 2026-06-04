@@ -30,30 +30,37 @@
                 <tbody id="recordTableBody">
                 </tbody>
             </table>
+            <!-- Pagination controls are injected here by renderPagination() -->
+            <div id="paginationControls"></div>
         </div>
     </div>
 
     <script>
-        function fetchRecords() {
+        // Track which page we are currently viewing
+        let currentPage = 1;
+
+        function fetchRecords(page) {
+            // Update the module-level page tracker
+            currentPage = page || currentPage;
 
             const tbody = document.getElementById('recordTableBody');
-            
-            // Only show 'Loading...' if the table is completely empty
+
+            // Only show 'Loading...' if the table is completely empty (first load)
             if (tbody.innerHTML.trim() === '') {
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
             }
 
-            getRecordsFromAPI().then(data => {
-                tbody.innerHTML = ''; 
+            getRecordsFromAPI(currentPage).then(data => {
+                tbody.innerHTML = '';
 
-                // We use (data.data || data) to future-proof for Laravel's pagination object!
-                const records = data.data || data; 
+                // Laravel paginate() always wraps records in a 'data' key
+                const records = data.data || data;
 
                 records.forEach(record => {
                     const row = document.createElement('tr');
-                    const formattedTime = formatRecordTime(record); // Using shared function!
+                    const formattedTime = formatRecordTime(record);
 
-                    let shapeHTML = record.shape === 'triangle' 
+                    let shapeHTML = record.shape === 'triangle'
                         ? `<div class="shape triangle" style="border-bottom-color: ${record.color};"></div>`
                         : `<div class="shape ${record.shape}" style="background-color: ${record.color};"></div>`;
 
@@ -64,11 +71,24 @@
                     `;
                     tbody.appendChild(row);
                 });
+
+                // Render the Prev / Next controls using the metadata from the paginator
+                renderPagination(
+                    document.getElementById('paginationControls'),
+                    data.current_page,
+                    data.last_page,
+                    data.total,
+                    fetchRecords   // callback: called with the new page number when user navigates
+                );
+
             }).catch(error => console.error("Error fetching data:", error));
         }
 
-        fetchRecords();
-        setInterval(fetchRecords, 3000);
+        // Initial load on page 1
+        fetchRecords(1);
+
+        // Polling: refresh the current page every 3 seconds (not always page 1)
+        setInterval(() => fetchRecords(currentPage), 3000);
     </script>
 </body>
 </html>

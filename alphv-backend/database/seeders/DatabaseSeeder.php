@@ -9,14 +9,17 @@ use Illuminate\Support\Facades\Hash;
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
-
     {
-        User::firstOrCreate( // firstOrCreate will check if a user with the given email exists, and if not, it will create one
+        // 1. Seed the admin account (idempotent — safe to run multiple times)
+        User::firstOrCreate(
             ['email' => 'admin@alphv.com'],
             [
                 'name'     => 'Admin User',
-                'password' => Hash::make('admin'), // Hash::make will hash the password before storing it in the database
+                'password' => Hash::make('admin'),
             ]
         );
+
+        // 2. Seed fake records for development and pagination testing
+        $this->call(RecordSeeder::class);
     }
 }

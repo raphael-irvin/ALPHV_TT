@@ -287,21 +287,42 @@ No authentication required.
 
 #### `GET /records`
 
-Returns all records in the database.
+Returns a paginated list of records. **10 records per page.** Pass the optional `page` query parameter to navigate between pages; it defaults to `1` if omitted.
+
+**Query parameters:**
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `page` | integer | `1` | The page number to retrieve |
 
 **Response `200 OK`:**
 ```json
-[
-  {
-    "id": 1,
-    "name": "Sample Shape",
-    "shape": "circle",
-    "color": "blue",
-    "created_at": "2026-05-30T10:00:00.000000Z",
-    "updated_at": "2026-05-30T10:00:00.000000Z"
-  }
-]
+{
+  "current_page": 1,
+  "data": [
+    {
+      "id": 1,
+      "name": "Sample Shape",
+      "shape": "circle",
+      "color": "blue",
+      "created_at": "2026-05-30T10:00:00.000000Z",
+      "updated_at": "2026-05-30T10:00:00.000000Z"
+    }
+  ],
+  "first_page_url": "http://127.0.0.1:8000/api/records?page=1",
+  "from": 1,
+  "last_page": 3,
+  "last_page_url": "http://127.0.0.1:8000/api/records?page=3",
+  "next_page_url": "http://127.0.0.1:8000/api/records?page=2",
+  "path": "http://127.0.0.1:8000/api/records",
+  "per_page": 10,
+  "prev_page_url": null,
+  "to": 10,
+  "total": 25
+}
 ```
+
+The `data` array contains the records for the requested page. The surrounding fields are Laravel's standard pagination metadata used by the frontend to render navigation controls.
 
 ---
 
@@ -483,9 +504,13 @@ The admin page performs a client-side token presence check on load. If no token 
 
 The User Portal achieves live synchronisation through **short polling**. Every 3 seconds, the page fires a `GET /api/records` request and re-renders the table with the latest data from the server.
 
+The polling interval is page-aware — it always refreshes whichever page the user is currently viewing, not unconditionally page 1:
+
 ```javascript
-fetchRecords();
-setInterval(fetchRecords, 3000);
+let currentPage = 1;
+
+fetchRecords(1);
+setInterval(() => fetchRecords(currentPage), 3000);
 ```
 
 This approach was chosen for its simplicity and reliability within the scope of this assessment. It requires no additional server infrastructure and works across all browsers without configuration.
@@ -520,6 +545,8 @@ php artisan test --filter RecordApiTest
 | `test_api_can_create_a_record` | Authenticated admin creates a new record | `201 Created`, record exists in database |
 | `test_api_can_update_a_record` | Authenticated admin updates an existing record | `200 OK`, updated values in database |
 | `test_api_can_delete_a_record` | Authenticated admin deletes a record | `200 OK`, record absent from database |
+| `test_api_deny_invalid_data_on_create` | Authenticated admin submits an invalid shape/color on create | `422 Unprocessable Entity` |
+| `test_api_deny_invalid_data_on_update` | Authenticated admin submits an invalid shape/color on update | `422 Unprocessable Entity` |
 
 Tests use an **in-memory SQLite database** (configured in `phpunit.xml`) so they run in complete isolation from your development MySQL database. The `RefreshDatabase` trait rolls back all changes after each test, keeping the test environment clean between runs.
 
@@ -545,13 +572,17 @@ Short polling requires no additional infrastructure (no Pusher account, no socke
 
 For a simple assessment SPA without a server-side session, localStorage is the most straightforward place to keep the token. The trade-off is that it is readable by JavaScript on the page, making it theoretically vulnerable to XSS attacks. In a production application, storing tokens in `HttpOnly` cookies is the more secure pattern.
 
+**Why `paginate()` over `simplePaginate()`?**
+
+Laravel offers two built-in pagination helpers. `simplePaginate()` produces only previous/next links with no total count, which is slightly more efficient. `paginate()` (used here) issues an additional `COUNT(*)` query to return the `total` and `last_page` fields. These two fields are required to display the "Page X of Y (N total)" summary in the frontend controls, so the small overhead is justified.
+
 ---
 
 ## Known Limitations
 
 These are acknowledged trade-offs made given the scope of the assessment:
 
-- **No pagination** — `GET /api/records` returns all rows. For large datasets, a paginated response would be appropriate.
+- **Pagination page size is hardcoded** — The 10-records-per-page limit is set directly in `RecordController::index()`. A production API would expose this as a configurable query parameter (e.g. `?per_page=25`) with a sensible maximum cap.
 - **Weak admin password** — The seeded password `admin` is intentionally simple for ease of evaluation. In any real deployment, a strong password policy would apply.
 - **localStorage token storage** — As described above, `HttpOnly` cookies are the production-recommended alternative.
 - **No rate limiting** — The login endpoint does not limit failed attempts. Laravel's built-in `throttle` middleware could be applied to the login route to prevent brute-force attacks.

@@ -59,10 +59,15 @@
                 <thead><tr><th>Last Updated</th><th>Name</th><th>Shape</th><th>Color</th><th>Actions</th></tr></thead>
                 <tbody id="adminTableBody"></tbody>
             </table>
+            <!-- Pagination controls are injected here by renderPagination() -->
+            <div id="paginationControls"></div>
         </div>
     </div>
 
     <script>
+
+        // Track which page we are currently viewing
+        let currentPage = 1;
 
         // Helper function to create headers with the token
         const getAuthHeaders = () => {
@@ -86,8 +91,10 @@
         }
 
         // === FETCH RECORDS ===
-        function fetchAdminRecords() {
-            
+        function fetchAdminRecords(page) {
+            // Update the module-level page tracker
+            currentPage = page || currentPage;
+
             const tbody = document.getElementById('adminTableBody');
             
             // Only show 'Loading...' if this is the very first time the page loads
@@ -95,9 +102,10 @@
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
             }
 
-            getRecordsFromAPI().then(data => {
+            getRecordsFromAPI(currentPage).then(data => {
                 tbody.innerHTML = ''; 
                 
+                // Laravel paginate() always wraps records in a 'data' key
                 const records = data.data || data; 
 
                 records.forEach(r => {
@@ -115,9 +123,19 @@
                             </td>
                         </tr>`;
                 });
+
+                // Render Prev / Next controls using the paginator metadata
+                renderPagination(
+                    document.getElementById('paginationControls'),
+                    data.current_page,
+                    data.last_page,
+                    data.total,
+                    fetchAdminRecords   // callback: called with the new page number when user navigates
+                );
+
             }).catch(error => console.error("Error fetching data:", error));
         }
-        fetchAdminRecords();
+        fetchAdminRecords(1);
 
         // === DELETE FUNCTION ===
         function deleteRecord(id) {
@@ -128,7 +146,8 @@
             })
             .then(res => {
                 if(!res.ok) throw new Error("Unauthorized");
-                fetchAdminRecords();
+                // After deletion, go back to page 1 to avoid landing on an empty last page
+                fetchAdminRecords(1);
             })
             .catch(err => alert("Failed to delete. Session may have expired."));
         }
@@ -175,7 +194,8 @@
                 msg.style.color = "green";
                 msg.innerText = id ? "Record updated!" : "Record saved!";
                 cancelEdit();
-                fetchAdminRecords();
+                // After create/update, go to page 1 so the user can see their change
+                fetchAdminRecords(1);
             })
             .catch(error => {
                 const msg = document.getElementById('statusMessage');

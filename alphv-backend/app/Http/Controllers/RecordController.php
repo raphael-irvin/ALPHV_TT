@@ -7,11 +7,12 @@ use Illuminate\Http\Request;
 
 class RecordController extends Controller
 {
-    // 1. READ: Fetch all records for the User Portal Grid
+    // 1. READ: Fetch all records for the User Portal Grid (paginated)
     public function index()
     {
-        // Grabs everything from the 'records' table and sends it back as JSON
-        $records = Record::all();
+        // Returns 10 records per page. Laravel reads the ?page= query param automatically.
+        // Response includes: data[], current_page, last_page, total, per_page, next_page_url, prev_page_url
+        $records = Record::paginate(10);
         return response()->json($records);
     }
 
