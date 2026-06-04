@@ -21,11 +21,8 @@
         <div class="admin-card">
             <table>
                 <thead>
-                    <tr>
-                        <th>Last Updated</th>
-                        <th>Name</th>
-                        <th style="text-align: center;">Shape & Color</th>
-                    </tr>
+                    <!-- Headers are injected by renderSortHeaders() on each fetch -->
+                    <tr id="userTableHead"></tr>
                 </thead>
                 <tbody id="recordTableBody">
                 </tbody>
@@ -36,11 +33,30 @@
     </div>
 
     <script>
-        // Track which page we are currently viewing
+        // === STATE ===
         let currentPage = 1;
+        let currentSortBy  = 'updated_at';
+        let currentSortDir = 'desc';
 
+        // Column definitions for the user portal header
+        // key=null means the column is not sortable
+        const USER_COLUMNS = [
+            { label: 'Last Updated', key: 'updated_at' },
+            { label: 'Name',         key: 'name' },
+            { label: 'Shape & Color', key: null, style: 'text-align: center;' },
+        ];
+
+        // === SORT HANDLER ===
+        // Called when the user clicks a sortable column header.
+        // Sorting always resets to page 1 so results are consistent.
+        function handleSort(newSortBy, newSortDir) {
+            currentSortBy  = newSortBy;
+            currentSortDir = newSortDir;
+            fetchRecords(1);
+        }
+
+        // === FETCH & RENDER ===
         function fetchRecords(page) {
-            // Update the module-level page tracker
             currentPage = page || currentPage;
 
             const tbody = document.getElementById('recordTableBody');
@@ -50,8 +66,17 @@
                 tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
             }
 
-            getRecordsFromAPI(currentPage).then(data => {
+            getRecordsFromAPI(currentPage, currentSortBy, currentSortDir).then(data => {
                 tbody.innerHTML = '';
+
+                // Re-render headers on every fetch so the sort indicator stays current
+                renderSortHeaders(
+                    document.getElementById('userTableHead'),
+                    USER_COLUMNS,
+                    currentSortBy,
+                    currentSortDir,
+                    handleSort
+                );
 
                 // Laravel paginate() always wraps records in a 'data' key
                 const records = data.data || data;
@@ -78,7 +103,7 @@
                     data.current_page,
                     data.last_page,
                     data.total,
-                    fetchRecords   // callback: called with the new page number when user navigates
+                    fetchRecords
                 );
 
             }).catch(error => console.error("Error fetching data:", error));
@@ -87,7 +112,7 @@
         // Initial load on page 1
         fetchRecords(1);
 
-        // Polling: refresh the current page every 3 seconds (not always page 1)
+        // Polling: refresh the current page every 3 seconds, preserving sort state
         setInterval(() => fetchRecords(currentPage), 3000);
     </script>
 </body>

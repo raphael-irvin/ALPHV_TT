@@ -11,13 +11,17 @@ function formatRecordTime(record) {
 
 /**
  * 2. Centralized Fetch Engine
- * Fetches a paginated page of records from the API.
+ * Fetches a paginated, sorted page of records from the API.
  * Automatically attaches the bearer token if the user is logged in as admin.
+ *
+ * @param {number} page    - Page number (default: 1)
+ * @param {string} sortBy  - Column to sort by: name | shape | color | updated_at
+ * @param {string} sortDir - Sort direction: asc | desc
  *
  * Returns the full Laravel paginator object:
  *   { data: [...], current_page, last_page, total, per_page, from, to }
  */
-function getRecordsFromAPI(page = 1) {
+function getRecordsFromAPI(page = 1, sortBy = 'updated_at', sortDir = 'desc') {
     const headers = { 'Accept': 'application/json' };
 
     // If a token exists (Admin is logged in), attach it to the request
@@ -26,7 +30,9 @@ function getRecordsFromAPI(page = 1) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    return fetch(`http://127.0.0.1:8000/api/records?page=${page}`, { headers })
+    const url = `http://127.0.0.1:8000/api/records?page=${page}&sort_by=${sortBy}&sort_dir=${sortDir}`;
+
+    return fetch(url, { headers })
         .then(response => {
             if (!response.ok) throw new Error("API Request Failed or Unauthorized");
             return response.json();
@@ -34,7 +40,43 @@ function getRecordsFromAPI(page = 1) {
 }
 
 /**
- * 3. Pagination Controls Renderer
+ * 3. Sortable Header Renderer
+ * Writes clickable <th> elements into a <thead><tr> element.
+ * Shows a ↑ or ↓ indicator on the currently active column, and ↕ on inactive sortable columns.
+ *
+ * @param {HTMLElement} theadRow - The <tr> inside <thead> to populate
+ * @param {Array}       columns  - Array of { label, key, style? }.
+ *                                 key=null means the column is not sortable.
+ * @param {string}      sortBy   - Currently active sort column key
+ * @param {string}      sortDir  - Currently active sort direction ('asc' | 'desc')
+ * @param {Function}    onSort   - Callback(newSortBy, newSortDir) when a header is clicked
+ */
+function renderSortHeaders(theadRow, columns, sortBy, sortDir, onSort) {
+    theadRow.innerHTML = '';
+
+    columns.forEach(col => {
+        const th = document.createElement('th');
+
+        if (!col.key) {
+            // Non-sortable column (e.g. Shape & Color, Actions)
+            th.textContent = col.label;
+            if (col.style) th.setAttribute('style', col.style);
+        } else {
+            const isActive  = sortBy === col.key;
+            const nextDir   = isActive && sortDir === 'asc' ? 'desc' : 'asc';
+            const indicator = isActive ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ' ↕';
+
+            th.innerHTML = `${col.label}<span class="sort-indicator">${indicator}</span>`;
+            th.className = 'sortable' + (isActive ? ' sort-active' : '');
+            th.addEventListener('click', () => onSort(col.key, nextDir));
+        }
+
+        theadRow.appendChild(th);
+    });
+}
+
+/**
+ * 4. Pagination Controls Renderer
  * Renders Previous / page-info / Next controls into a given container element.
  *
  * @param {HTMLElement} container    - The element to render pagination into

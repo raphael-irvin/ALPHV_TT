@@ -254,22 +254,26 @@ project-root/
 │   │       ├── User.php                    # Sanctum-enabled user model
 │   │       └── Record.php                  # Shape/color record model
 │   ├── database/
+│   │   ├── factories/
+│   │   │   └── RecordFactory.php           # Generates fake records for testing/seeding
 │   │   ├── migrations/
 │   │   │   ├── ..._create_records_table.php
 │   │   │   ├── ..._create_users_table.php
 │   │   │   └── ..._create_personal_access_tokens_table.php
 │   │   └── seeders/
-│   │       └── DatabaseSeeder.php          # Creates admin account
+│   │       ├── DatabaseSeeder.php          # Orchestrates all seeders
+│   │       └── RecordSeeder.php            # Seeds 25 fake records (idempotent)
 │   ├── routes/
 │   │   └── api.php                         # All API route definitions
 │   └── tests/
 │       └── Feature/
-│           └── RecordApiTest.php           # Automated feature tests
+│           └── RecordApiTest.php           # Automated feature tests (8 tests)
 │
 └── alphv-frontend/             # Plain HTML/CSS/JS frontend
     ├── login.html              # Login page
     ├── admin.html              # Protected admin portal
     ├── user.html               # Public live dashboard
+    ├── shared.js               # Shared utilities: fetch engine, pagination, sort headers
     └── styles.css              # Shared stylesheet
 ```
 
@@ -287,13 +291,17 @@ No authentication required.
 
 #### `GET /records`
 
-Returns a paginated list of records. **10 records per page.** Pass the optional `page` query parameter to navigate between pages; it defaults to `1` if omitted.
+Returns a paginated, sortable list of records. **10 records per page.** All query parameters are optional.
 
 **Query parameters:**
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `page` | integer | `1` | The page number to retrieve |
+| Parameter | Type | Default | Allowed values | Description |
+|---|---|---|---|---|
+| `page` | integer | `1` | Any positive integer | The page number to retrieve |
+| `sort_by` | string | `updated_at` | `name`, `shape`, `color`, `updated_at` | Column to sort by |
+| `sort_dir` | string | `desc` | `asc`, `desc` | Sort direction |
+
+Any value outside the allowed set is silently ignored and the default is used instead.
 
 **Response `200 OK`:**
 ```json
@@ -322,7 +330,7 @@ Returns a paginated list of records. **10 records per page.** Pass the optional 
 }
 ```
 
-The `data` array contains the records for the requested page. The surrounding fields are Laravel's standard pagination metadata used by the frontend to render navigation controls.
+The `data` array contains the records for the requested page. The surrounding fields are Laravel's standard pagination metadata used by the frontend to render navigation controls and sort indicators.
 
 ---
 
@@ -504,10 +512,12 @@ The admin page performs a client-side token presence check on load. If no token 
 
 The User Portal achieves live synchronisation through **short polling**. Every 3 seconds, the page fires a `GET /api/records` request and re-renders the table with the latest data from the server.
 
-The polling interval is page-aware — it always refreshes whichever page the user is currently viewing, not unconditionally page 1:
+The polling interval is both page-aware and sort-aware — it always refreshes whichever page the user is currently viewing with the currently active sort order applied:
 
 ```javascript
-let currentPage = 1;
+let currentPage    = 1;
+let currentSortBy  = 'updated_at';
+let currentSortDir = 'desc';
 
 fetchRecords(1);
 setInterval(() => fetchRecords(currentPage), 3000);
@@ -547,10 +557,14 @@ php artisan test --filter RecordApiTest
 | `test_api_can_delete_a_record` | Authenticated admin deletes a record | `200 OK`, record absent from database |
 | `test_api_deny_invalid_data_on_create` | Authenticated admin submits an invalid shape/color on create | `422 Unprocessable Entity` |
 | `test_api_deny_invalid_data_on_update` | Authenticated admin submits an invalid shape/color on update | `422 Unprocessable Entity` |
+| `test_records_index_returns_paginated_response_structure` | Seeds 15 records, hits page 1 — verifies full paginator envelope and 10-item page | `200 OK`, correct `current_page`, `last_page`, `total`, `per_page`, 10 items in `data` |
+| `test_records_index_page_2_returns_correct_slice` | Seeds 15 records, hits `?page=2` — verifies the second page returns the remaining 5 | `200 OK`, `current_page=2`, 5 items in `data` |
 
 Tests use an **in-memory SQLite database** (configured in `phpunit.xml`) so they run in complete isolation from your development MySQL database. The `RefreshDatabase` trait rolls back all changes after each test, keeping the test environment clean between runs.
 
 `Sanctum::actingAs()` is used to simulate an authenticated user, allowing tests to hit protected routes without needing to go through the real login flow.
+
+`Record::factory()` is used in the pagination tests to generate any number of fake records instantly, with all values constrained to the API's valid shape/color enums.
 
 ---
 
@@ -575,6 +589,12 @@ For a simple assessment SPA without a server-side session, localStorage is the m
 **Why `paginate()` over `simplePaginate()`?**
 
 Laravel offers two built-in pagination helpers. `simplePaginate()` produces only previous/next links with no total count, which is slightly more efficient. `paginate()` (used here) issues an additional `COUNT(*)` query to return the `total` and `last_page` fields. These two fields are required to display the "Page X of Y (N total)" summary in the frontend controls, so the small overhead is justified.
+
+**Why server-side sorting over client-side sorting?**
+
+With pagination active, client-side sorting would only reorder the 10 records already on the current page — the globally first record in the sorted order might be sitting on page 2 or 3, making the result actively misleading. Server-side sorting passes `sort_by` and `sort_dir` query parameters to `GET /api/records`, and Laravel's `orderBy()` sorts the full dataset before paginating it, ensuring the sort order is consistent across all pages. Clicking a column header always resets to page 1 so the user sees the sorted result from the beginning.
+
+The `sort_by` column is validated against an explicit allowlist (`name`, `shape`, `color`, `updated_at`) before being passed to `orderBy()`. This prevents SQL column-injection — an attacker cannot force an arbitrary expression into the query by manipulating the query parameter.
 
 ---
 

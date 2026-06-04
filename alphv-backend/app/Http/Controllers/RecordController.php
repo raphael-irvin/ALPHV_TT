@@ -7,12 +7,28 @@ use Illuminate\Http\Request;
 
 class RecordController extends Controller
 {
-    // 1. READ: Fetch all records for the User Portal Grid (paginated)
-    public function index()
+    // 1. READ: Fetch all records for the User Portal Grid (paginated + sortable)
+    public function index(Request $request)
     {
+        // --- Sorting ---
+        // Allowlist of columns the client is permitted to sort by.
+        // This prevents SQL injection via arbitrary column name injection.
+        $allowedSorts = ['name', 'shape', 'color', 'updated_at'];
+        $allowedDirs  = ['asc', 'desc'];
+
+        $sortBy  = in_array($request->query('sort_by'), $allowedSorts)
+                    ? $request->query('sort_by')
+                    : 'updated_at';          // default: most recently changed first
+
+        $sortDir = in_array($request->query('sort_dir'), $allowedDirs)
+                    ? $request->query('sort_dir')
+                    : 'desc';               // default direction
+
+        // --- Pagination ---
         // Returns 10 records per page. Laravel reads the ?page= query param automatically.
         // Response includes: data[], current_page, last_page, total, per_page, next_page_url, prev_page_url
-        $records = Record::paginate(10);
+        $records = Record::orderBy($sortBy, $sortDir)->paginate(10);
+
         return response()->json($records);
     }
 

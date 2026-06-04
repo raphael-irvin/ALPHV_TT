@@ -56,7 +56,10 @@
         <div class="admin-card">
             <h3 class="section-header">Manage Existing Records</h3>
             <table>
-                <thead><tr><th>Last Updated</th><th>Name</th><th>Shape</th><th>Color</th><th>Actions</th></tr></thead>
+                <thead>
+                    <!-- Headers are injected by renderSortHeaders() on each fetch -->
+                    <tr id="adminTableHead"></tr>
+                </thead>
                 <tbody id="adminTableBody"></tbody>
             </table>
             <!-- Pagination controls are injected here by renderPagination() -->
@@ -66,33 +69,50 @@
 
     <script>
 
-        // Track which page we are currently viewing
-        let currentPage = 1;
+        // === STATE ===
+        let currentPage    = 1;
+        let currentSortBy  = 'updated_at';
+        let currentSortDir = 'desc';
+
+        // Column definitions for the admin table header
+        // key=null means the column is not sortable
+        const ADMIN_COLUMNS = [
+            { label: 'Last Updated', key: 'updated_at' },
+            { label: 'Name',         key: 'name' },
+            { label: 'Shape',        key: 'shape' },
+            { label: 'Color',        key: 'color' },
+            { label: 'Actions',      key: null },
+        ];
 
         // Helper function to create headers with the token
-        const getAuthHeaders = () => {
-            return {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'Authorization': `Bearer ${token}` // The VIP Wristband
-            };
-        };
+        const getAuthHeaders = () => ({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'Authorization': `Bearer ${token}` // The VIP Wristband
+        });
 
         // === LOGOUT LOGIC ===
         function logout() {
-            // Tell the backend to destroy the token
             fetch('http://127.0.0.1:8000/api/logout', {
                 method: 'POST',
                 headers: getAuthHeaders()
             }).then(() => {
-                localStorage.removeItem('auth_token'); // Delete local copy
-                window.location.href = 'login.html'; // Kick to login
+                localStorage.removeItem('auth_token');
+                window.location.href = 'login.html';
             });
+        }
+
+        // === SORT HANDLER ===
+        // Called when the user clicks a sortable column header.
+        // Sorting always resets to page 1 so results are consistent.
+        function handleSort(newSortBy, newSortDir) {
+            currentSortBy  = newSortBy;
+            currentSortDir = newSortDir;
+            fetchAdminRecords(1);
         }
 
         // === FETCH RECORDS ===
         function fetchAdminRecords(page) {
-            // Update the module-level page tracker
             currentPage = page || currentPage;
 
             const tbody = document.getElementById('adminTableBody');
@@ -102,9 +122,18 @@
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #6b7280; font-style: italic;">Loading records...</td></tr>';
             }
 
-            getRecordsFromAPI(currentPage).then(data => {
+            getRecordsFromAPI(currentPage, currentSortBy, currentSortDir).then(data => {
                 tbody.innerHTML = ''; 
-                
+
+                // Re-render headers on every fetch so the sort indicator stays current
+                renderSortHeaders(
+                    document.getElementById('adminTableHead'),
+                    ADMIN_COLUMNS,
+                    currentSortBy,
+                    currentSortDir,
+                    handleSort
+                );
+
                 // Laravel paginate() always wraps records in a 'data' key
                 const records = data.data || data; 
 
@@ -130,7 +159,7 @@
                     data.current_page,
                     data.last_page,
                     data.total,
-                    fetchAdminRecords   // callback: called with the new page number when user navigates
+                    fetchAdminRecords
                 );
 
             }).catch(error => console.error("Error fetching data:", error));
@@ -139,13 +168,13 @@
 
         // === DELETE FUNCTION ===
         function deleteRecord(id) {
-            if(!confirm("Delete this record?")) return;
+            if (!confirm("Delete this record?")) return;
             fetch(`http://127.0.0.1:8000/api/records/${id}`, {
                 method: 'DELETE',
-                headers: getAuthHeaders() // Must include token!
+                headers: getAuthHeaders()
             })
             .then(res => {
-                if(!res.ok) throw new Error("Unauthorized");
+                if (!res.ok) throw new Error("Unauthorized");
                 // After deletion, go back to page 1 to avoid landing on an empty last page
                 fetchAdminRecords(1);
             })
@@ -173,16 +202,18 @@
             e.preventDefault(); 
             const id = document.getElementById('recordId').value;
             const payload = {
-                name: document.getElementById('name').value,
+                name:  document.getElementById('name').value,
                 shape: document.getElementById('shape').value,
                 color: document.getElementById('color').value
             };
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `http://127.0.0.1:8000/api/records/${id}` : 'http://127.0.0.1:8000/api/records';
+            const url = id
+                ? `http://127.0.0.1:8000/api/records/${id}`
+                : 'http://127.0.0.1:8000/api/records';
 
             fetch(url, {
                 method: method,
-                headers: getAuthHeaders(), // Must include token!
+                headers: getAuthHeaders(),
                 body: JSON.stringify(payload)
             })
             .then(res => {
