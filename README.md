@@ -13,6 +13,7 @@ A full-stack web application built for the ALPHV Work-Based Learning (WBL) inter
   - [Tech Stack](#tech-stack)
   - [Prerequisites](#prerequisites)
   - [Quick Start](#quick-start)
+  - [Troubleshooting](#troubleshooting)
   - [Manual Setup](#manual-setup)
   - [Project Structure](#project-structure)
   - [API Reference](#api-reference)
@@ -172,6 +173,56 @@ Double-click `start_app.bat` from the project root. The script will:
 |---|---|
 | Email | admin@alphv.com |
 | Password | admin |
+
+---
+
+## Troubleshooting
+
+### MySQL fails to start in XAMPP (port conflict)
+
+This is the most common setup issue. If the MySQL row in the XAMPP Control Panel stays red or immediately turns red after clicking **Start**, another MySQL process is already occupying port 3306. This typically happens on machines that have a standalone MySQL installation (e.g. MySQL Community Server, MySQL Workbench, or a previous XAMPP installation) running as a Windows service in the background.
+
+**How to identify the conflict**
+
+Open a terminal and run:
+
+```bash
+netstat -ano | findstr :3306
+```
+
+If any line appears, port 3306 is already in use. Note the PID in the last column and open Task Manager to identify the process.
+
+**Fix A — Task Manager (quickest)**
+
+1. Press `Ctrl + Shift + Esc` to open Task Manager.
+2. Click the **Details** tab (or search for the process name).
+3. Find any process named **mysqld.exe** or **MySQL**.
+4. Right-click → **End Task** (repeat for all MySQL processes found).
+5. Return to XAMPP and click **Start** next to MySQL.
+
+> This stops the process for the current session only. It will start again on next reboot if it is registered as a Windows service. Use Fix B below to make the change permanent.
+
+**Fix B — Stop the conflicting Windows service (permanent)**
+
+1. Press `Win + R`, type `services.msc`, and press Enter.
+2. Scroll to find a service named **MySQL**, **MySQL80**, or similar.
+3. Right-click → **Stop**.
+4. Right-click → **Properties** → set **Startup type** to **Manual** to prevent it from auto-starting on reboot.
+5. Return to XAMPP and click **Start** next to MySQL.
+
+**Fix C — Change XAMPP MySQL to a different port**
+
+If you need both MySQL instances running simultaneously:
+
+1. In the XAMPP Control Panel, click **Config** next to MySQL and open `my.ini`.
+2. Find the `port=3306` line under both `[mysqld]` and `[client]` and change both to `3307` (or another free port).
+3. Open `alphv-backend/.env` and update:
+   ```env
+   DB_PORT=3307
+   ```
+4. Restart XAMPP MySQL.
+
+> The application also prints a port conflict warning at startup — if `php artisan migrate` fails, read the error output in the launcher window for step-by-step guidance.
 
 ---
 

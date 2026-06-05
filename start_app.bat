@@ -15,7 +15,25 @@ echo    [3] Click START next to MySQL
 echo    [4] Open phpMyAdmin and create a database
 echo        named exactly:  alphv_db
 echo.
-echo  Once all three steps are done, press any key.
+echo  -------------------------------------------------
+echo  IMPORTANT -- MySQL Port Conflict Warning:
+echo.
+echo    If MySQL fails to start in XAMPP, another MySQL
+echo    process is likely using port 3306 already.
+echo.
+echo    Fix A (Quickest): Open Task Manager, go to the
+echo    Details tab, find and end any process named
+echo    'mysqld.exe' or 'MySQL', then retry in XAMPP.
+echo.
+echo    Fix B (Permanent): Open services.msc, find
+echo    'MySQL' or 'MySQL80', stop it and set its
+echo    Startup type to Manual.
+echo.
+echo    Fix C (Keep both): Change XAMPP MySQL port to
+echo    3307 in my.ini, update DB_PORT in .env to match.
+echo  -------------------------------------------------
+echo.
+echo  Once all four steps are done, press any key.
 echo  =====================================================
 pause > nul
 
@@ -77,11 +95,21 @@ echo  [SETUP 4/5] Running database migrations...
 php artisan migrate --force
 if %errorlevel% neq 0 (
     echo.
-    echo  [ERROR] Migration failed!
-    echo  Double-check that:
-    echo    - XAMPP MySQL is running
-    echo    - alphv_db database exists in phpMyAdmin
-    echo    - .env DB credentials are correct
+    echo  [ERROR] Migration failed! Most common causes:
+    echo.
+    echo    1. PORT CONFLICT: Another MySQL process is already
+    echo       running on port 3306 (e.g. MySQL80 service).
+    echo       Open services.msc, stop 'MySQL' or 'MySQL80',
+    echo       then restart XAMPP MySQL and try again.
+    echo.
+    echo    2. MySQL not started: XAMPP MySQL panel shows red.
+    echo       Click Start next to MySQL in XAMPP.
+    echo.
+    echo    3. Database missing: alphv_db does not exist yet.
+    echo       Go to http://localhost/phpmyadmin and create it.
+    echo.
+    echo    4. Wrong credentials: Check DB_USERNAME / DB_PASSWORD
+    echo       in alphv-backend\.env match your MySQL setup.
     echo.
     pause
     exit /b 1
