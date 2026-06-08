@@ -93,7 +93,7 @@
 
         // === LOGOUT LOGIC ===
         function logout() {
-            fetch('http://127.0.0.1:8000/api/logout', {
+            fetch(`${API_BASE_URL}/api/logout`, {
                 method: 'POST',
                 headers: getAuthHeaders()
             }).then(() => {
@@ -169,7 +169,7 @@
         // === DELETE FUNCTION ===
         function deleteRecord(id) {
             if (!confirm("Delete this record?")) return;
-            fetch(`http://127.0.0.1:8000/api/records/${id}`, {
+            fetch(`${API_BASE_URL}/api/records/${id}`, {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             })
@@ -208,8 +208,8 @@
             };
             const method = id ? 'PUT' : 'POST';
             const url = id
-                ? `http://127.0.0.1:8000/api/records/${id}`
-                : 'http://127.0.0.1:8000/api/records';
+                ? `${API_BASE_URL}/api/records/${id}`
+                : `${API_BASE_URL}/api/records`;
 
             fetch(url, {
                 method: method,

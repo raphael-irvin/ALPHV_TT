@@ -31,6 +31,7 @@
         </div>
     </div>
 
+    <script src="shared.js"></script>
     <script>
         document.getElementById('loginForm').addEventListener('submit', function(event) {
             event.preventDefault();
@@ -40,7 +41,7 @@
                 password: document.getElementById('password').value
             };
 
-            fetch('http://127.0.0.1:8000/api/login', {
+            fetch(`${API_BASE_URL}/api/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                 body: JSON.stringify(payload)

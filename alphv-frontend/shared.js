@@ -1,5 +1,11 @@
 // shared.js
 
+// ── API Base URL ──────────────────────────────────────────────────
+// For local development:  'http://127.0.0.1:8000'
+// For production:         '' (empty string = same-origin, since Nginx proxies /api)
+const API_BASE_URL = '';
+// ──────────────────────────────────────────────────────────────────
+
 /**
  * 1. Centralized Timestamp Formatter
  * Takes a record object and returns a beautifully formatted date/time string.
@@ -30,7 +36,7 @@ function getRecordsFromAPI(page = 1, sortBy = 'updated_at', sortDir = 'desc') {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const url = `http://127.0.0.1:8000/api/records?page=${page}&sort_by=${sortBy}&sort_dir=${sortDir}`;
+    const url = `${API_BASE_URL}/api/records?page=${page}&sort_by=${sortBy}&sort_dir=${sortDir}`;
 
     return fetch(url, { headers })
         .then(response => {
