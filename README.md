@@ -2,11 +2,24 @@
 
 A full-stack web application built for the ALPHV Work-Based Learning (WBL) internship selection assessment. The system consists of a RESTful API backend and a vanilla frontend that communicates with it, featuring token-based authentication and a real-time public dashboard.
 
+## 🌐 Live Demo
+
+> **The application is deployed and accessible at: [https://alphvtt.xyz](https://alphvtt.xyz)**
+
+| Page | URL |
+|---|---|
+| User Dashboard (Public) | [https://alphvtt.xyz/user.html](https://alphvtt.xyz/user.html) |
+| Admin Login | [https://alphvtt.xyz/login.html](https://alphvtt.xyz/login.html) |
+| Admin Portal (Protected) | [https://alphvtt.xyz/admin.html](https://alphvtt.xyz/admin.html) |
+
+**Default admin credentials:** `admin@alphv.com` / `admin`
+
 ---
 
 ## Table of Contents
 
 - [ALPHV Technical Assessment — Web Application](#alphv-technical-assessment--web-application)
+  - [Live Demo](#-live-demo)
   - [Table of Contents](#table-of-contents)
   - [Project Overview](#project-overview)
   - [Architecture](#architecture)
@@ -30,6 +43,7 @@ A full-stack web application built for the ALPHV Work-Based Learning (WBL) inter
   - [Automated Testing](#automated-testing)
     - [Running the Tests](#running-the-tests)
     - [Test Coverage](#test-coverage)
+  - [Deployment](#deployment)
   - [Design Decisions](#design-decisions)
   - [Known Limitations](#known-limitations)
 
@@ -46,6 +60,8 @@ The application is split into two portals:
 ---
 
 ## Architecture
+
+**Local Development:**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -89,7 +105,28 @@ The application is split into two portals:
 └─────────────────────────────────────────────────────────┘
 ```
 
-The backend and frontend are completely decoupled. The frontend is plain HTML/CSS/JavaScript served by a local PHP server — it has no knowledge of Laravel's internals and communicates exclusively through the public API.
+**Production (DigitalOcean):**
+
+```
+┌──────────────────────────────────────────────────────────┐
+│    DigitalOcean Droplet — Ubuntu 24.04 (alphvtt.xyz)    │
+│                                                          │
+│  ┌────────────────────────────────────────────────────┐  │
+│  │                    Nginx                           │  │
+│  │  ┌──────────────────┐  ┌────────────────────────┐  │  │
+│  │  │  /* ──► Static   │  │  /api/* ──► PHP-FPM    │  │  │
+│  │  │  Files (Frontend)│  │  (Laravel Backend)     │  │  │
+│  │  └──────────────────┘  └────────────────────────┘  │  │
+│  └────────────────────────────────────────────────────┘  │
+│                                                          │
+│  ┌──────────────┐   ┌──────────────────────────┐         │
+│  │  MariaDB     │   │  Let's Encrypt (SSL)     │         │
+│  │  (alphv_db)  │   │  Auto-renewing HTTPS     │         │
+│  └──────────────┘   └──────────────────────────┘         │
+└──────────────────────────────────────────────────────────┘
+```
+
+The backend and frontend are completely decoupled. The frontend is plain HTML/CSS/JavaScript — it has no knowledge of Laravel's internals and communicates exclusively through the public API. In production, Nginx serves both the static frontend and proxies API requests to PHP-FPM, so all traffic flows through a single origin (no CORS required).
 
 ---
 
@@ -100,11 +137,15 @@ The backend and frontend are completely decoupled. The frontend is plain HTML/CS
 | Backend Framework | Laravel | 12.x |
 | Backend Language | PHP | 8.2+ |
 | Authentication | Laravel Sanctum | 4.x |
-| Database | MySQL (via XAMPP) | 8.x |
+| Database (Local) | MySQL (via XAMPP) | 8.x |
+| Database (Production) | MariaDB | 10.x |
+| Web Server (Production) | Nginx + PHP-FPM | — |
+| SSL (Production) | Let's Encrypt (Certbot) | — |
 | Frontend | HTML, CSS, Vanilla JavaScript | — |
-| Frontend Server | PHP Built-in Server | 8.2+ |
+| Frontend Server (Local) | PHP Built-in Server | 8.2+ |
 | Dependency Manager (PHP) | Composer | 2.x |
 | Testing | PHPUnit | 11.x |
+| Hosting | DigitalOcean Droplet (Ubuntu 24.04) | — |
 
 ---
 
@@ -332,7 +373,7 @@ project-root/
 
 ## API Reference
 
-All endpoints are served from `http://127.0.0.1:8000/api`.
+All endpoints are served from `http://127.0.0.1:8000/api` (local) or `https://alphvtt.xyz/api` (production).
 
 ### Public Endpoints
 
@@ -616,6 +657,28 @@ Tests use an **in-memory SQLite database** (configured in `phpunit.xml`) so they
 `Sanctum::actingAs()` is used to simulate an authenticated user, allowing tests to hit protected routes without needing to go through the real login flow.
 
 `Record::factory()` is used in the pagination tests to generate any number of fake records instantly, with all values constrained to the API's valid shape/color enums.
+
+---
+
+## Deployment
+
+The application is deployed to a **DigitalOcean Droplet** running Ubuntu 24.04 and is accessible at [https://alphvtt.xyz](https://alphvtt.xyz).
+
+**Server stack:**
+
+- **Nginx** serves the static frontend files directly and reverse-proxies `/api/*` requests to PHP-FPM (Laravel). This same-origin setup eliminates CORS complexity since the frontend and API share a single domain.
+- **PHP 8.2-FPM** runs the Laravel application.
+- **MariaDB** (a drop-in MySQL replacement) provides the relational database. MariaDB was chosen over MySQL 8.0 due to its significantly lower memory footprint, which is essential on the 512 MB RAM Droplet.
+- **Let's Encrypt** provides free, auto-renewing SSL certificates via Certbot, enabling HTTPS.
+- A **1 GB swap file** supplements the Droplet's limited RAM to prevent out-of-memory issues.
+
+**Why a Droplet over App Platform?**
+
+DigitalOcean's App Platform is a simpler PaaS option, but it charges separately for managed databases ($15/month minimum for MySQL). A single Droplet at $4/month runs Nginx, PHP-FPM, and MariaDB together, keeping the entire deployment within budget. Laravel/PHP also lacks first-class buildpack support on App Platform (unlike Django/Python), so a Droplet provides more straightforward configuration.
+
+**Frontend API configuration:**
+
+The frontend uses a centralized `API_BASE_URL` constant (defined in `shared.js`) to determine the API endpoint. In production, this is set to an empty string (`''`), which causes all API calls to use relative paths (e.g., `/api/records`). Since Nginx serves both the frontend and the API from the same origin, this works without any CORS configuration. For local development, it can be set to `'http://127.0.0.1:8000'`.
 
 ---
 
